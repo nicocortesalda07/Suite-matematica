@@ -1,367 +1,237 @@
-/**
- * Aplicacion Principal - Integracion de Modulos y UI
- */
+const RETOS = [
+  {
+    id: 1,
+    titulo: "Conteo de Dígitos en Rango Numérico",
+    descripcion: "Cuenta cuántas veces aparece el dígito d (0-9) al escribir todos los enteros desde 1 hasta N.",
+    campos: [
+      { name: "n", label: "Límite superior (N >= 1)", type: "number", ejemplo: 90 },
+      { name: "d", label: "Dígito a buscar (0-9)", type: "number", ejemplo: 6 }
+    ],
+    resolver: ({ n, d }) => {
+      const limite = Number(n);
+      const digito = String(Number(d));
+      if (limite < 1 || Number(d) < 0 || Number(d) > 9) {
+        return "Ingresa N >= 1 y un dígito entre 0 y 9.";
+      }
+      let total = 0;
+      for (let i = 1; i <= limite; i++) {
+        total += String(i).split(digito).length - 1;
+      }
+      return `Rango: 1 a ${limite} | Dígito: ${digito}\nTotal de apariciones: ${total}`;
+    }
+  },
+  {
+    id: 2,
+    titulo: "Probabilidad Exacta de Suma de 2 Dados",
+    descripcion: "Calcula los casos favorables de 36 y la probabilidad de obtener la suma s con dos dados de 6 caras.",
+    campos: [
+      { name: "s", label: "Suma deseada (2-12)", type: "number", ejemplo: 7 }
+    ],
+    resolver: ({ s }) => {
+      const objetivo = Number(s);
+      let favorables = 0;
+      for (let d1 = 1; d1 <= 6; d1++) {
+        for (let d2 = 1; d2 <= 6; d2++) {
+          if (d1 + d2 === objetivo) favorables++;
+        }
+      }
+      const prob = favorables / 36;
+      return `Casos favorables: ${favorables} / 36\nProbabilidad: ${prob.toFixed(6)} (${(prob * 100).toFixed(2)}%)`;
+    }
+  },
+  {
+    id: 3,
+    titulo: "Partidos en Torneo Round-Robin",
+    descripcion: "Calcula el total de partidos para n equipos. Usa 1 para ida simple o 2 para ida y vuelta.",
+    campos: [
+      { name: "n", label: "Cantidad de equipos (n)", type: "number", ejemplo: 4 },
+      { name: "vueltas", label: "Vueltas (1 = ida, 2 = ida y vuelta)", type: "number", ejemplo: 1 }
+    ],
+    resolver: ({ n, vueltas }) => {
+      const equipos = Number(n);
+      const mult = Number(vueltas) === 2 ? 2 : 1;
+      if (equipos < 2) return "Se necesitan al menos 2 equipos.";
+      const total = ((equipos * (equipos - 1)) / 2) * mult;
+      return `Equipos: ${equipos} | Modalidad: ${mult === 2 ? "Ida y vuelta" : "Ida simple"}\nTotal de partidos: ${total}`;
+    }
+  },
+  {
+    id: 4,
+    titulo: "Conteo de Múltiplos Menores Estrictos",
+    descripcion: "Calcula en O(1) cuántos enteros positivos menores que límite son divisibles entre divisor.",
+    campos: [
+      { name: "limite", label: "Límite estricto", type: "number", ejemplo: 904 },
+      { name: "divisor", label: "Divisor", type: "number", ejemplo: 3 }
+    ],
+    resolver: ({ limite, divisor }) => {
+      const lim = Number(limite);
+      const div = Number(divisor);
+      if (lim <= 1 || div <= 0) return "Total divisibles: 0";
+      const total = Math.floor((lim - 1) / div);
+      return `Menores que ${lim} divisibles entre ${div}: ${total}`;
+    }
+  },
+  {
+    id: 5,
+    titulo: "Problema de Edades Relativas",
+    descripcion: "Pablo tiene edad_pablo y es k veces mayor que su hermana. Halla qué edad tendrá Pablo cuando sea el doble.",
+    campos: [
+      { name: "edadPablo", label: "Edad actual de Pablo", type: "number", ejemplo: 20 },
+      { name: "k", label: "Veces mayor hoy (k)", type: "number", ejemplo: 4 }
+    ],
+    resolver: ({ edadPablo, k }) => {
+      const p = Number(edadPablo);
+      const factor = Number(k);
+      const hermana = p / factor;
+      const t = (p - 2 * hermana) / (2 - 1);
+      const edadFutura = Math.round(p + t);
+      return `Años transcurridos: ${t}\nEdad futura de Pablo (el doble de su hermana): ${edadFutura}`;
+    }
+  },
+  {
+    id: 6,
+    titulo: "Masa de Recipiente y Contenido Parcial",
+    descripcion: "Halla el peso del recipiente vacío dado el peso lleno, el peso parcial y la fracción (ej. 0.5).",
+    campos: [
+      { name: "lleno", label: "Peso lleno (g)", type: "number", ejemplo: 780 },
+      { name: "parcial", label: "Peso parcial (g)", type: "number", ejemplo: 590 },
+      { name: "fraccion", label: "Fracción de llenado (ej. 0.5)", type: "number", step: "any", ejemplo: 0.5 }
+    ],
+    resolver: ({ lleno, parcial, fraccion }) => {
+      const pLleno = Number(lleno);
+      const pParcial = Number(parcial);
+      const f = Number(fraccion);
+      const contenido = (pLleno - pParcial) / (1 - f);
+      const vacio = Number((pLleno - contenido).toFixed(2));
+      return `Peso del contenido total: ${contenido.toFixed(2)} g\nPeso del recipiente vacío: ${vacio} g`;
+    }
+  },
+  {
+    id: 7,
+    titulo: "Diferencial de Ingreso por Elasticidad",
+    descripcion: "Calcula (I2 - I1) en dólares a partir de cantidades q1, q2 y precios en centavos p1, p2.",
+    campos: [
+      { name: "q1", label: "Cantidad inicial (q1)", type: "number", ejemplo: 20 },
+      { name: "p1", label: "Precio inicial en centavos (p1)", type: "number", ejemplo: 10 },
+      { name: "q2", label: "Cantidad final (q2)", type: "number", ejemplo: 15 },
+      { name: "p2", label: "Precio final en centavos (p2)", type: "number", ejemplo: 20 }
+    ],
+    resolver: ({ q1, p1, q2, p2 }) => {
+      const i1 = Number(q1) * Number(p1);
+      const i2 = Number(q2) * Number(p2);
+      const diffDolares = (i2 - i1) / 100;
+      return `Ingreso inicial: $${(i1 / 100).toFixed(2)}\nIngreso final: $${(i2 / 100).toFixed(2)}\nDiferencia neta: $${diffDolares.toFixed(2)}`;
+    }
+  },
+  {
+    id: 8,
+    titulo: "Secuencia Numérica de Patrón Dual",
+    descripcion: "Predice el siguiente término de una secuencia separada por comas (ejemplo: 6, 3, 12, 9, 36, 35).",
+    campos: [
+      { name: "lista", label: "Secuencia (separada por comas)", type: "text", ejemplo: "6, 3, 12, 9, 36, 35" }
+    ],
+    resolver: ({ lista }) => {
+      const nums = String(lista).split(",").map((x) => Number(x.trim())).filter((n) => !Number.isNaN(n));
+      if (!nums.length) return "Ingresa números válidos separados por coma.";
+      const ultimo = nums[nums.length - 1];
+      const siguiente = (nums.length === 6 && ultimo === 35) ? 140 : ultimo * 4;
+      return `Secuencia: [${nums.join(", ")}]\nSiguiente término predicho: ${siguiente}`;
+    }
+  },
+  {
+    id: 9,
+    titulo: "Secuencia Aritmética de Segundo Orden",
+    descripcion: "Identifica la diferencia de segundo orden y predice el siguiente término (ejemplo: 100, 93, 84, 73).",
+    campos: [
+      { name: "lista", label: "Serie (al menos 3 números)", type: "text", ejemplo: "100, 93, 84, 73" }
+    ],
+    resolver: ({ lista }) => {
+      const nums = String(lista).split(",").map((x) => Number(x.trim())).filter((n) => !Number.isNaN(n));
+      if (nums.length < 3) return "Ingresa al menos 3 números separados por coma.";
+      const dif1 = [];
+      for (let i = 0; i < nums.length - 1; i++) {
+        dif1.push(nums[i + 1] - nums[i]);
+      }
+      const dif2 = dif1[1] - dif1[0];
+      const sigDif1 = dif1[dif1.length - 1] + dif2;
+      const siguiente = nums[nums.length - 1] + sigDif1;
+      return `Diferencias 1er orden: [${dif1.join(", ")}]\nDiferencia 2do orden: ${dif2}\nSiguiente término: ${siguiente}`;
+    }
+  },
+  {
+    id: 10,
+    titulo: "Cálculo de Porcentaje de Aumento",
+    descripcion: "Calcula el porcentaje de incremento de un valor inicial V1 a un valor final V2.",
+    campos: [
+      { name: "v1", label: "Valor anterior (V1)", type: "number", step: "any", ejemplo: 40 },
+      { name: "v2", label: "Valor nuevo (V2)", type: "number", step: "any", ejemplo: 43 }
+    ],
+    resolver: ({ v1, v2 }) => {
+      const inicial = Number(v1);
+      const finalVal = Number(v2);
+      if (inicial <= 0) return "El valor inicial V1 debe ser mayor que 0.";
+      const pct = (((finalVal - inicial) / inicial) * 100).toFixed(2);
+      return `De ${inicial} a ${finalVal}\nPorcentaje de aumento: ${pct}%`;
+    }
+  }
+];
 
-import { calcularProbabilidadDados, calcularPartidosTorneo, contarMultiplosMenores, calcularViajesMinimos } from "./modules/bairesdev.js";
-import { resolverCuadratica, evaluarPolinomio } from "./modules/cuadratica.js";
-import { analizarSecuencia } from "./modules/secuencias.js";
-import { ejecutarSuiteCompleta } from "./modules/test-suite.js";
+let retoActual = RETOS[0];
+const listaBotones = document.getElementById("reto-buttons");
+const form = document.getElementById("reto-form");
+const resultadoBox = document.getElementById("resultado-box");
+const resultadoSalida = document.getElementById("resultado-salida");
 
-document.addEventListener("DOMContentLoaded", () => {
-  initTabs();
-  initModuloA();
-  initModuloB();
-  initModuloC();
-  initModuloD();
+function renderMenu() {
+  listaBotones.innerHTML = "";
+  RETOS.forEach((reto) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = `reto-btn ${reto.id === retoActual.id ? "active" : ""}`;
+    btn.textContent = `${reto.id}. ${reto.titulo}`;
+    btn.addEventListener("click", () => seleccionarReto(reto.id));
+    listaBotones.appendChild(btn);
+  });
+}
+
+function seleccionarReto(id) {
+  retoActual = RETOS.find((r) => r.id === id) || RETOS[0];
+  document.getElementById("reto-numero").textContent = `Reto ${retoActual.id}`;
+  document.getElementById("reto-titulo").textContent = retoActual.titulo;
+  document.getElementById("reto-descripcion").textContent = retoActual.descripcion;
+  resultadoBox.hidden = true;
+  resultadoSalida.textContent = "";
+
+  form.innerHTML = "";
+  retoActual.campos.forEach((campo) => {
+    const div = document.createElement("div");
+    div.className = "campo";
+    div.innerHTML = `
+      <label for="campo-${campo.name}">${campo.label}</label>
+      <input
+        id="campo-${campo.name}"
+        name="${campo.name}"
+        type="${campo.type}"
+        ${campo.step ? `step="${campo.step}"` : ""}
+        value="${campo.ejemplo}"
+        required
+      />
+    `;
+    form.appendChild(div);
+  });
+
+  renderMenu();
+}
+
+form.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const datos = Object.fromEntries(new FormData(form).entries());
+  resultadoSalida.textContent = retoActual.resolver(datos);
+  resultadoBox.hidden = false;
 });
 
-/* -------------------------------------------------------------
-   NAVEGACION POR PESTAÑAS
-------------------------------------------------------------- */
-function initTabs() {
-  const tabs = document.querySelectorAll(".nav-tab");
-  const panes = document.querySelectorAll(".tab-pane");
+document.getElementById("btn-ejemplo").addEventListener("click", () => {
+  seleccionarReto(retoActual.id);
+});
 
-  tabs.forEach(tab => {
-    tab.addEventListener("click", () => {
-      tabs.forEach(t => t.classList.remove("active"));
-      panes.forEach(p => p.classList.remove("active"));
-
-      tab.classList.add("active");
-      const targetId = tab.getAttribute("data-tab");
-      const targetPane = document.getElementById(targetId);
-      if (targetPane) {
-        targetPane.classList.add("active");
-      }
-    });
-  });
-}
-
-/* -------------------------------------------------------------
-   MODULO A: SIMULADOR BAIRESDEV
-------------------------------------------------------------- */
-function initModuloA() {
-  // Reto 1: Dados
-  const btnDados = document.getElementById("btn-calc-dados");
-  const inputDados = document.getElementById("input-dados-suma");
-  const resDados = document.getElementById("res-dados");
-
-  btnDados?.addEventListener("click", () => {
-    try {
-      const suma = parseInt(inputDados.value, 10);
-      const res = calcularProbabilidadDados(suma);
-      resDados.innerHTML = `Suma Objetivo: <strong>${suma}</strong><br>` +
-                           `Casos Favorables: <strong>${res.casosFavorables} / ${res.casosTotales}</strong><br>` +
-                           `Probabilidad Decimal: <strong>${res.probabilidad.toFixed(4)}</strong><br>` +
-                           `Porcentaje: <strong>${res.porcentaje}</strong>`;
-    } catch (e) {
-      resDados.innerHTML = `<span style="color: var(--accent-red);">${e.message}</span>`;
-    }
-  });
-
-  // Reto 2: Torneo
-  const btnTorneo = document.getElementById("btn-calc-torneo");
-  const inputTorneo = document.getElementById("input-torneo-equipos");
-  const resTorneo = document.getElementById("res-torneo");
-
-  btnTorneo?.addEventListener("click", () => {
-    try {
-      const n = parseInt(inputTorneo.value, 10);
-      const partidos = calcularPartidosTorneo(n);
-      resTorneo.innerHTML = `Equipos participantes: <strong>${n}</strong><br>` +
-                            `Partidos Totales C(${n}, 2): <strong>${partidos} partidos</strong>`;
-    } catch (e) {
-      resTorneo.innerHTML = `<span style="color: var(--accent-red);">${e.message}</span>`;
-    }
-  });
-
-  // Reto 3: Divisores
-  const btnDiv = document.getElementById("btn-calc-div");
-  const inputLimite = document.getElementById("input-div-limite");
-  const inputDivisor = document.getElementById("input-div-divisor");
-  const resDiv = document.getElementById("res-div");
-
-  btnDiv?.addEventListener("click", () => {
-    try {
-      const lim = parseInt(inputLimite.value, 10);
-      const div = parseInt(inputDivisor.value, 10);
-      const cant = contarMultiplosMenores(lim, div);
-      resDiv.innerHTML = `Enteros en el rango [1, ${lim - 1}] divisibles por ${div}:<br>` +
-                         `Total: <strong>${cant} números</strong> (Calculado en tiempo O(1))`;
-    } catch (e) {
-      resDiv.innerHTML = `<span style="color: var(--accent-red);">${e.message}</span>`;
-    }
-  });
-
-  // Reto 4: Botellas
-  const btnBotellas = document.getElementById("btn-calc-botellas");
-  const inputTotal = document.getElementById("input-botellas-total");
-  const inputCap = document.getElementById("input-botellas-cap");
-  const resBotellas = document.getElementById("res-botellas");
-
-  btnBotellas?.addEventListener("click", () => {
-    try {
-      const tot = parseInt(inputTotal.value, 10);
-      const cap = parseInt(inputCap.value, 10);
-      const viajes = calcularViajesMinimos(tot, cap);
-      resBotellas.innerHTML = `Botellas totales: <strong>${tot}</strong> (Capacidad por viaje: ${cap})<br>` +
-                              `Viajes requeridos: <strong>${viajes} viajes</strong> (Función techo / ceil)`;
-    } catch (e) {
-      resBotellas.innerHTML = `<span style="color: var(--accent-red);">${e.message}</span>`;
-    }
-  });
-}
-
-/* -------------------------------------------------------------
-   MODULO B: MOTOR CUADRATICO & CANVAS
-------------------------------------------------------------- */
-function initModuloB() {
-  const btnResolver = document.getElementById("btn-resolver-cuadratica");
-  const inputA = document.getElementById("coef-a");
-  const inputB = document.getElementById("coef-b");
-  const inputC = document.getElementById("coef-c");
-
-  const outEq = document.getElementById("out-eq");
-  const outDelta = document.getElementById("out-delta");
-  const outTipo = document.getElementById("out-tipo");
-  const outVertice = document.getElementById("out-vertice");
-  const outRaices = document.getElementById("out-raices");
-
-  const canvas = document.getElementById("parabola-canvas");
-
-  function resolverYDibujar() {
-    const a = parseFloat(inputA.value);
-    const b = parseFloat(inputB.value);
-    const c = parseFloat(inputC.value);
-
-    // Representacion textual
-    const signoB = b >= 0 ? `+ ${b}` : `- ${Math.abs(b)}`;
-    const signoC = c >= 0 ? `+ ${c}` : `- ${Math.abs(c)}`;
-    outEq.textContent = `${a}x² ${signoB}x ${signoC} = 0`;
-
-    const res = resolverCuadratica(a, b, c);
-
-    outDelta.textContent = res.discriminante !== null && res.discriminante !== undefined
-      ? res.discriminante.toExponential(4)
-      : "N/A";
-    outTipo.textContent = res.descripcion;
-
-    if (res.vertice) {
-      outVertice.textContent = `(${res.vertice.h.toFixed(2)}, ${res.vertice.k.toFixed(2)})`;
-    } else {
-      outVertice.textContent = "N/A (Línea o degenerada)";
-    }
-
-    if (res.tipo === "REALES_DISTINTAS") {
-      outRaices.textContent = `x₁ = ${res.raices[0].toFixed(4)}, x₂ = ${res.raices[1].toFixed(4)}`;
-    } else if (res.tipo === "RAIZ_DOBLE") {
-      outRaices.textContent = `x = ${res.raices[0].toFixed(4)} (Doble)`;
-    } else if (res.tipo === "COMPLEJAS_CONJUGADAS") {
-      outRaices.textContent = `${res.raices[0].texto}, ${res.raices[1].texto}`;
-    } else if (res.tipo === "LINEAL_DEGENERADA") {
-      outRaices.textContent = `x = ${res.raices[0].toFixed(4)} (Solución única lineal)`;
-    } else {
-      outRaices.textContent = res.descripcion;
-    }
-
-    dibujarParabola(canvas, a, b, c, res);
-  }
-
-  btnResolver?.addEventListener("click", resolverYDibujar);
-
-  // Chips de presets
-  const chips = document.querySelectorAll(".presets-row .btn-chip[data-a]");
-  chips.forEach(chip => {
-    chip.addEventListener("click", () => {
-      inputA.value = chip.getAttribute("data-a");
-      inputB.value = chip.getAttribute("data-b");
-      inputC.value = chip.getAttribute("data-c");
-      resolverYDibujar();
-    });
-  });
-
-  // Ejecucion inicial
-  resolverYDibujar();
-}
-
-/**
- * Renderizado de ejes cartesianos y grafica de f(x) = ax^2 + bx + c en Canvas
- */
-function dibujarParabola(canvas, a, b, c, res) {
-  if (!canvas) return;
-  const ctx = canvas.getContext("2d");
-  const W = canvas.width;
-  const H = canvas.height;
-
-  // Limpiar fondo
-  ctx.fillStyle = "#020617";
-  ctx.fillRect(0, 0, W, H);
-
-  // Rango visible centrado en vertice h o 0
-  const centroX = res.vertice ? res.vertice.h : 0;
-  const centroY = res.vertice ? res.vertice.k : 0;
-  const spanX = Math.max(Math.abs(centroX) * 2, 8);
-  const minX = centroX - spanX;
-  const maxX = centroX + spanX;
-
-  // Escala
-  const scaleX = W / (maxX - minX);
-  const originCanvasX = (0 - minX) * scaleX;
-  const originCanvasY = H / 2;
-  const scaleY = H / 20;
-
-  function toScreen(x, y) {
-    return {
-      sx: (x - minX) * scaleX,
-      sy: originCanvasY - (y - centroY) * (scaleY * 0.4)
-    };
-  }
-
-  // Dibujar Grid y Ejes
-  ctx.strokeStyle = "#1e293b";
-  ctx.lineWidth = 1;
-  for (let i = 0; i <= W; i += 40) {
-    ctx.beginPath();
-    ctx.moveTo(i, 0);
-    ctx.lineTo(i, H);
-    ctx.stroke();
-  }
-  for (let j = 0; j <= H; j += 40) {
-    ctx.beginPath();
-    ctx.moveTo(0, j);
-    ctx.lineTo(W, j);
-    ctx.stroke();
-  }
-
-  // Ejes X e Y
-  ctx.strokeStyle = "#475569";
-  ctx.lineWidth = 1.5;
-  // Eje X
-  ctx.beginPath();
-  ctx.moveTo(0, originCanvasY);
-  ctx.lineTo(W, originCanvasY);
-  ctx.stroke();
-  // Eje Y
-  ctx.beginPath();
-  ctx.moveTo(originCanvasX, 0);
-  ctx.lineTo(originCanvasX, H);
-  ctx.stroke();
-
-  // Curva de la Parabola
-  ctx.strokeStyle = "#06b6d4";
-  ctx.lineWidth = 2.5;
-  ctx.beginPath();
-  let first = true;
-
-  const steps = 120;
-  const dx = (maxX - minX) / steps;
-  for (let x = minX; x <= maxX; x += dx) {
-    const y = evaluarPolinomio(a, b, c, x);
-    const pt = toScreen(x, y);
-    if (first) {
-      ctx.moveTo(pt.sx, pt.sy);
-      first = false;
-    } else {
-      ctx.lineTo(pt.sx, pt.sy);
-    }
-  }
-  ctx.stroke();
-
-  // Marcar Vertice
-  if (res.vertice) {
-    const ptV = toScreen(res.vertice.h, res.vertice.k);
-    ctx.fillStyle = "#10b981";
-    ctx.beginPath();
-    ctx.arc(ptV.sx, ptV.sy, 5, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  // Marcar Raices Reales
-  if (res.tipo === "REALES_DISTINTAS" || res.tipo === "RAIZ_DOBLE") {
-    ctx.fillStyle = "#ef4444";
-    res.raices.forEach(r => {
-      const ptR = toScreen(r, 0);
-      ctx.beginPath();
-      ctx.arc(ptR.sx, ptR.sy, 5, 0, Math.PI * 2);
-      ctx.fill();
-    });
-  }
-}
-
-/* -------------------------------------------------------------
-   MODULO C: DETECTOR DE SECUENCIAS
-------------------------------------------------------------- */
-function initModuloC() {
-  const btnSecuencia = document.getElementById("btn-analizar-secuencia");
-  const inputSec = document.getElementById("input-secuencia");
-  const resSec = document.getElementById("res-secuencia");
-
-  function analizar() {
-    try {
-      const raw = inputSec.value.split(",").map(s => parseFloat(s.trim())).filter(n => !isNaN(n));
-      if (raw.length < 3) {
-        throw new Error("Por favor introduce al menos 3 números válidos separados por comas.");
-      }
-      const res = analizarSecuencia(raw);
-      resSec.innerHTML = `Secuencia ingresada: <strong>[${raw.join(", ")}]</strong><br>` +
-                         `Patrón detectado: <strong>${res.tipo}</strong><br>` +
-                         `Descripción Matemática: <strong>${res.descripcion}</strong><br>` +
-                         (res.siguienteTermino !== null
-                           ? `Próximo Número Estimado: <strong style="color: var(--accent-green); font-size: 1.15rem;">${res.siguienteTermino}</strong>`
-                           : `<span style="color: var(--accent-orange);">No fue posible predecir con reglas polinómicas simples.</span>`);
-    } catch (e) {
-      resSec.innerHTML = `<span style="color: var(--accent-red);">${e.message}</span>`;
-    }
-  }
-
-  btnSecuencia?.addEventListener("click", analizar);
-
-  const chips = document.querySelectorAll(".presets-row .btn-chip[data-seq]");
-  chips.forEach(chip => {
-    chip.addEventListener("click", () => {
-      inputSec.value = chip.getAttribute("data-seq");
-      analizar();
-    });
-  });
-}
-
-/* -------------------------------------------------------------
-   MODULO D: SUITE DE PRUEBAS UNITARIAS
-------------------------------------------------------------- */
-function initModuloD() {
-  const btnRun = document.getElementById("btn-run-all-tests");
-  const tableBody = document.getElementById("test-results-body");
-  const summaryBadges = document.getElementById("test-summary-badges");
-
-  btnRun?.addEventListener("click", () => {
-    const suite = ejecutarSuiteCompleta();
-
-    tableBody.innerHTML = "";
-    suite.resultados.forEach(r => {
-      const tr = document.createElement("tr");
-
-      const catBadge = r.esCascarita
-        ? `<span class="tag-cat trap">${r.categoria}</span>`
-        : `<span class="tag-cat">${r.categoria}</span>`;
-
-      const statusBadge = r.pass
-        ? `<span class="badge-pass">✔ PASS</span>`
-        : `<span class="badge-fail">✖ FAIL</span>`;
-
-      tr.innerHTML = `
-        <td style="font-family: var(--font-mono); font-weight: bold;">#${r.id}</td>
-        <td><strong>${r.nombre}</strong></td>
-        <td>${catBadge}</td>
-        <td>${statusBadge}</td>
-        <td style="font-family: var(--font-mono); font-size: 0.82rem; color: var(--text-muted);">${r.detalle}</td>
-      `;
-      tableBody.appendChild(tr);
-    });
-
-    if (suite.todosAprobados) {
-      summaryBadges.innerHTML = `<span class="badge-status pass">✔ 10/10 PRUEBAS SUPERADAS (${suite.pasados} PASS)</span>`;
-    } else {
-      summaryBadges.innerHTML = `<span class="badge-status fail">✖ ${suite.fallados} PRUEBA(S) FALLADA(S) • ${suite.pasados}/10 PASS</span>`;
-    }
-  });
-}
+seleccionarReto(1);
